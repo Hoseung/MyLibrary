@@ -12,7 +12,7 @@ class PdfParser():
     4. 
     """
     def __init__(self):
-
+        pass
 
 
 class BibTex():
@@ -24,14 +24,14 @@ class BibTex():
     There probably be some tools to work with bibtex.
     """
     def __init__(self):
-        pass
+        self.fields=dict()
 
     def journal(self):
         """
         Based on ADS search result, determine in which journal the paper has been published.
         """
         # Do some string comparing things. -> distance measuring! 
-        self["journal"] = 
+        self.fields["journal"] = ""
 
         
 
