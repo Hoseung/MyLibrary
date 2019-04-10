@@ -62,6 +62,8 @@ class SinglePaper():
         Note
         ----
         Take advantage of existing bibtex fields as much as possible.
+
+        Some papers might not appear on Arxiv. -- Those with embargo.
     """
     def __init__(self):
         self.ArXivID=None
