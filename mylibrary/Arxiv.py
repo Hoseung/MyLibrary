@@ -22,70 +22,12 @@ Check if published version is available.
 """
 
 from urllib3 import PoolManager
+from lxml import etree
+
 """
 Will it be better to keep PoolManager as a single, global instance?
 """
 http = PoolManager()
-
-
-def get_sentence_standard(ll, tag):
-    return ll.strip("<"+tag).split(">")[1].split("<")[0]
-
-def parse_arxiv(arx, qresult):
-    """
-    Note
-    ----
-    Summary is multi-line. 
-    One author comprises multiple sub-entries (name/affiliation, and more?),
-    and there may be multiple authors.
-
-    Non atom-standard fields look arbitrary in formats.
-    I don't expect these hardcoded parsing will always work...
-    """
-
-    lines = qresult.decode("UTF-8").split("\n")
-    key=None
-    entry=False
-
-    i_beg=-1
-    i_end=-1
-
-    for i, ll in enumerate(lines):
-        if "</entry>" in ll:
-            break
-        if "<entry>" in ll:
-            entry=True
-            continue
-        
-        if entry:
-            if i_beg <0:
-                # update key
-                try:
-                    key = ll.split("<")[1].split(">")[0]
-                except:
-                    continue
-                try:
-                    key = key.split()[0].split(":")[1]
-                    key_escape = "arxiv:" + key
-                except:
-                    key_escape = key
-                    pass
-                if key in arx.meta.keys():
-                    #if arx.meta[key] is None:
-                    i_beg=i
-                        
-                    if "</{}>".format(key_escape) in ll:
-                        # If one-line string
-                        i_end=i
-            elif "</{}>".format(key_escape) in ll:
-                # if multi-line string
-                i_end = i            
-            if i_end > 0:
-                arx.meta[key]=get_sentence_standard("".join(lines[i_beg:i+1]).strip(), key_escape)#.split("/")[-1]
-                i_beg=i_end=-1
-
-
-#def 
 
 class Arxiv_meta():
     """
@@ -95,9 +37,9 @@ class Arxiv_meta():
             title=None,
             published=None,
             updated=None, 
-            authors=None,
+            author=[],
             primary_category=None,
-            categories=[],
+            category=[],
             summary=None, 
             doi=None,
             id=str(id),
@@ -114,8 +56,32 @@ class Arxiv_meta():
         r = self._get_ads_query()
         
         if parse:
-            parse_arxiv(self, r.data)
+            self.parse_xml(r.data)
         if return_raw:
             return r.data
 
+    def parse_xml(self, xml_data):
+        root = etree.fromstring(xml_data)
 
+        for element in root.find("{http://www.w3.org/2005/Atom}entry"):
+            name = element.tag.split("}")[-1]
+            if name == "author":
+                for Echild in element.getchildren():
+                    self.meta[name].append(Echild.text)            
+            else:
+                try:
+                    if isinstance(arx.meta[name], list):
+                        try:
+                            self.meta[name].append(element.attrib["term"])
+                        except:
+                            self.meta[name].append(element.text)
+                    else:
+                        try:
+                            self.meta[name] = (element.attrib["term"])
+                        except:
+                            self.meta[name] = (element.text)
+                except:
+                    continue
+
+    def _strip_parsed_text(self):
+        pass
