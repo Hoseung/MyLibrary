@@ -21,13 +21,14 @@ Check if published version is available.
 
 """
 
-from urllib3 import PoolManager
+#from urllib3 import PoolManager
+import requests
 from lxml import etree
 
 """
 Will it be better to keep PoolManager as a single, global instance?
 """
-http = PoolManager()
+#http = PoolManager()
 
 class Arxiv_meta():
     """
@@ -50,7 +51,8 @@ class Arxiv_meta():
             self.query_by_id(self.meta["id"])
 
     def _get_ads_query(self):
-        return http.request("GET", "http://export.arxiv.org/api/query?id_list={}".format(self.meta["id"]))
+        return requests.get("http://export.arxiv.org/api/query?id_list={}".format(self.meta["id"])).raw
+        #return http.request("GET", "http://export.arxiv.org/api/query?id_list={}".format(self.meta["id"]))
 
     def query_by_id(self, parse=True, return_raw=False):
         r = self._get_ads_query()

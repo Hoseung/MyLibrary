@@ -1,3 +1,18 @@
+import json
+import requests
+
+"""
+To do
+1. How should I store and read my token?
+2. Is there other option than json? 
+3. If I need to use json, can I avoide using xml in arxiv?
+4. How to retrieve citation list?
+5. 
+"""
+
+token = "asdf"
+User  = "hoseung"
+
 ADS_fields=["author", "title", "journal", "archivePrefix", "eprint", 
         "keywords", "year", "month", 
         "volume", "eid", "pages", 
@@ -48,3 +63,28 @@ class ADS_bib():
                         self.bib[name.strip()]=int(value)
                     except:
                         self.bib[name.strip()]=value.strip()
+
+
+class ADS():
+    def __init__(self):
+        """
+        bibcode = {"bibcodes":["2003ApJS..148..175S"]}
+        """
+        self.bibcode=""
+
+    def generate_bibcode(self):
+        pass
+
+    def metric_by_bibcode(self, bibcode):
+        r = requests.post("https://api.adsabs.harvard.edu/v1/metrics", \
+                 headers={"Authorization": User + token, "Content-type": "application/json"}, \
+                 data=json.dumps(bibcode))
+        return r.json()
+
+    def bibtex_by_bibcode(self, bibcode):
+        r = requests.post("https://api.adsabs.harvard.edu/v1/export/bibtex", \
+                 headers={"Authorization": User + token, "Content-type": "application/json"}, \
+                 data=json.dumps(bibcode))
+        return r.json()
+
+    
