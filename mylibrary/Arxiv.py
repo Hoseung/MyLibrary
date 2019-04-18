@@ -72,16 +72,16 @@ class Arxiv_meta():
                     self.meta[name].append(Echild.text)            
             else:
                 try:
-                    if isinstance(arx.meta[name], list):
+                    if isinstance(self.meta[name], list):
                         try:
                             self.meta[name].append(element.attrib["term"])
                         except:
                             self.meta[name].append(element.text)
                     else:
                         try:
-                            self.meta[name] = (element.attrib["term"])
+                            self.meta[name] = element.attrib["term"]
                         except:
-                            self.meta[name] = (element.text)
+                            self.meta[name] = element.text
                 except:
                     continue
 
