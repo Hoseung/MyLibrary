@@ -47,20 +47,23 @@ class Arxiv_meta():
             journal_ref=None,
             )
         
-        if load:
+        if id is not None and load:
             self.query_by_id(self.meta["id"])
 
-    def _get_ads_query(self):
-        return requests.get("http://export.arxiv.org/api/query?id_list={}".format(self.meta["id"])).raw
+    def _get_single_paper(self):
+        return requests.get("http://export.arxiv.org/api/query?id_list={}".format(\
+            self.meta["id"])).content
         #return http.request("GET", "http://export.arxiv.org/api/query?id_list={}".format(self.meta["id"]))
 
-    def query_by_id(self, parse=True, return_raw=False):
-        r = self._get_ads_query()
+    def query_by_id(self, id=None, parse=True, return_raw=False):
+        if id is not None:
+            self.meta["id"] = id
+        r = self._get_single_paper()
         
         if parse:
-            self.parse_xml(r.data)
+            self.parse_xml(r)
         if return_raw:
-            return r.data
+            return r
 
     def parse_xml(self, xml_data):
         root = etree.fromstring(xml_data)
