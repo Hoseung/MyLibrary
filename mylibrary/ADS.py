@@ -11,8 +11,11 @@ To do
 5. 
 """
 
-token = "asdf"
-User  = "hoseung"
+#User, token = open(".token", "r").readlines()
+#User = User.strip()
+#token = token.strip()
+User = "Hoseung"
+token = "N1HMvy4RRkGn2wRZ4iJsoxj9wGbTPTfqRXKSX0Dd"  
 
 ADS_fields=["author", "title", "journal", "archivePrefix", "eprint", 
         "keywords", "year", "month", 
@@ -81,7 +84,7 @@ class ADS_bib():
 
 
 class ADS():
-    def __init__(self):
+    def __init__(self, bibcode=None, arx_id=None):
         """
         bibcode = {"bibcodes":["2003ApJS..148..175S"]}
 
@@ -92,6 +95,8 @@ class ADS():
         -> Try using a custom format export (http://adsabs.github.io/help/actions/export)
 
         """
+        self.bibcode=bibcode
+        self.arx_id = arx_id
         self.meta = dict(
             title=None,
             journal=None,
@@ -109,10 +114,19 @@ class ADS():
             DOI=None,
             eprintid=None,
             )
+        
         # to be compared with _generate_bibcode
-        self.bibcode=self.meta["url"].split("/")[-1]
+        if self.bibcode is not None:
+            r= self._ref_by_bibcode()
+            #self.bibcode=self.meta["url"].split("/")[-1]
+        elif self.arx_id is not None:
+            r = self._ref_by_arxiv_id()
         
-        
+        try:
+            self.parse_bibtex(r)
+        except:
+            pass
+
     def _generate_bibcode(self):
         """
         Specification: http://adsabs.github.io/help/actions/bibcode
@@ -126,13 +140,20 @@ class ADS():
                                                         ".",
                                                         self.meta["pages"],
                                                         self.meta["author"][0][0])
-    def request_by_bibcode(self, bibcode):
-        r = requests.post("https://api.adsabs.harvard.edu/v1/metrics", \
-                 headers={"Authorization": User + token, "Content-type": "application/json"}, \
-                 data=json.dumps(bibcode))
-        return r.json()
+    def request_by_bibcode(self, bibcode=None):
+        if bibcode is None:
+            bibcode = self.bibcode
+        return requests.post("https://api.adsabs.harvard.edu/v1/metrics", \
+                            headers={"Authorization": "Bearer {}".format(token),
+                                    "Content-type": "application/json"},
+                                    data=json.dumps(bibcode)).json
 
-    def ref_by_bibcode(self, bibcode, format="refabsxml"):
+    def _ref_by_arxiv_id(self, arx_id=None):
+        if arx_id is None:
+            arx_id = self.arx_id
+        return requests.get("https://ui.adsabs.harvard.edu/#abs/arXiv:{}".format(arx_id)).json
+        
+    def _ref_by_bibcode(self, bibcode=None, format="refabsxml"):
         """
         format = {bibtex, bibtexabs, ads, endnote, rss, refxml, refabsxml, cusmtom, ...}
 
@@ -141,10 +162,13 @@ class ADS():
         bibtexabs = bibtex + abstract.
         refabsxml = abstract + xml feed
         """
+        if bibcode is None:
+            bibcode = self.bibcode
+        
         return requests.post("https://api.adsabs.harvard.edu/v1/export/"+format, \
-                 headers={"Authorization": User + token,
+                 headers={"Authorization": "Bearer {}".format(token),
                   "Content-type": "application/json"}, 
-                 data=json.dumps(bibcode)).json
+                 data=json.dumps(bibcode)).json()
 
     def parse_bibtex_pybtex(self, json_bib):
         import pybtex
@@ -157,7 +181,6 @@ class ADS():
     def parse_bibtex(self, json_bib):
         parser = etree.XMLParser(ns_clean=True, recover=True, encoding='utf-8')
         root = etree.fromstring(json_bib["export"].encode("utf-8"), parser=parser)
-        #for element in root.find("{http://ads.harvard.edu/schema/abs/1.1/abstracts}record"):
         keys = self.meta.keys()
         for element in root.find("{http://ads.harvard.edu/schema/abs/1.1/abstracts}record"):
             name = element.tag.split("}")[-1]
@@ -191,7 +214,7 @@ class ADS():
 
         # Journal abbv
         try:
-            self.meta["journal_ref"] = get_journal_ref(self.meta["jorunal"])
+            self.meta["journal_ref"] = adsutil.get_journal_ref(self.meta["jorunal"])
         except:
             pass
 

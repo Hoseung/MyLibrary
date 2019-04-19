@@ -1,3 +1,3 @@
 name="mylibrary"
 
-from . import Arxiv, paper
+from . import Arxiv, paper, ADS
